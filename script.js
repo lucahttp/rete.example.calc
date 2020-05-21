@@ -84,9 +84,45 @@ class AddComponent extends Rete.Component {
     }
 }
 
+class DelComponent extends Rete.Component {
+  constructor(){
+      super("Del");
+  }
+
+  builder(node) {
+      var inp1 = new Rete.Input('num',"Number", numSocket);
+      var inp2 = new Rete.Input('num2', "Number2", numSocket);
+      var out = new Rete.Output('num', "Number", numSocket);
+
+      inp1.addControl(new NumControl(this.editor, 'num'))
+      inp2.addControl(new NumControl(this.editor, 'num2'))
+
+      return node
+          .addInput(inp1)
+          .addInput(inp2)
+          .addControl(new NumControl(this.editor, 'preview', true))
+          .addOutput(out);
+  }
+
+  worker(node, inputs, outputs) {
+      var n1 = inputs['num'].length?inputs['num'][0]:node.data.num1;
+      var n2 = inputs['num2'].length?inputs['num2'][0]:node.data.num2;
+      var result = n1 - n2;
+      
+      this.editor.nodes.find(n => n.id == node.id).controls.get('preview').setValue(result);
+      outputs['num'] = result;
+  }
+}
+
+
+
+
+
+
+
 (async () => {
     var container = document.querySelector('#rete');
-    var components = [new NumComponent(), new AddComponent()];
+    var components = [new NumComponent(), new AddComponent() ,new DelComponent()];
     
     var editor = new Rete.NodeEditor('demo@0.1.0', container);
     editor.use(ConnectionPlugin.default);
@@ -107,6 +143,7 @@ class AddComponent extends Rete.Component {
     var n1 = await components[0].createNode({num: 2});
     var n2 = await components[0].createNode({num: 0});
     var add = await components[1].createNode();
+    var del = await components[2].createNode();
 
     n1.position = [80, 200];
     n2.position = [80, 400];
@@ -116,6 +153,7 @@ class AddComponent extends Rete.Component {
     editor.addNode(n1);
     editor.addNode(n2);
     editor.addNode(add);
+    editor.addNode(del);
 
     editor.connect(n1.outputs.get('num'), add.inputs.get('num'));
     editor.connect(n2.outputs.get('num'), add.inputs.get('num2'));
